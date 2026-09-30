@@ -1,8 +1,38 @@
 #Requires AutoHotkey v2.0
 #SingleInstance Force
+SendMode "Input"
+
+if (!A_IsAdmin) {
+	try {
+		if (A_IsCompiled) {
+			Run('*RunAs "' A_ScriptFullPath '" /restart')
+		} else {
+			Run('*RunAs "' A_AhkPath '" /restart "' A_ScriptFullPath '"')
+		}
+	}
+	ExitApp
+}
+
 #InputLevel 1
-*AppsKey::    Send("{RCtrl Down}")
-*AppsKey Up:: Send("{RCtrl Up}")
+*AppsKey:: {
+	Send("{RCtrl Down}")
+}
+
+*AppsKey Up:: {
+	Send("{RCtrl Up}")
+}
+
+CapsLock:: {
+	Send("{Enter}")
+}
+
+CapsLock Up:: {
+	Send("{Enter Up}")
+}
+
+#CapsLock:: {
+	SetCapsLockState(!GetKeyState("CapsLock", "T"))
+}
 
 ; ------------------------------------------------------------
 ; （# = Win，+ = Shift，^ = Ctrl，! = Alt）
@@ -11,15 +41,15 @@
 ; 內部送出的 AppsKey(用來模擬按一下 List 鍵原本功能)，避免互相誤觸。
 ; ------------------------------------------------------------
 
-global BurstThreshold := 100   ; 毫秒；判斷「單獨按下CP」vs「刻意Win+CP」的門檻，可自行調整
-global g_WinDownTime  := 0     ; 真正的 Win 鍵最近一次「由放開變按下」的時間點
-global g_LWinIsDown   := false
-global g_RWinIsDown   := false ; 右邊 Win 鍵目前是否按著(旁觀記錄，不即時查詢)
-global g_ComboActive  := false ; 目前是否正處於「CP 鍵按著沒放開」的狀態
+Global BurstThreshold := 100   ; 毫秒；判斷「單獨按下CP」vs「刻意Win+CP」的門檻，可自行調整
+Global g_WinDownTime  := 0     ; 真正的 Win 鍵最近一次「由放開變按下」的時間點
+Global g_LWinIsDown   := false
+Global g_RWinIsDown   := false ; 右邊 Win 鍵目前是否按著(旁觀記錄，不即時查詢)
+Global g_ComboActive  := false ; 目前是否正處於「CP 鍵按著沒放開」的狀態
 
 ; 單純旁觀記錄 Win 鍵按下的時間，不攔截、不影響任何其他功能
 ~*LWin:: {
-	global g_WinDownTime, g_LWinIsDown, g_RWinIsDown
+	Global g_WinDownTime, g_LWinIsDown, g_RWinIsDown
 	if !g_LWinIsDown && !g_RWinIsDown {
 		g_LWinIsDown  := true
 		g_WinDownTime := A_TickCount
@@ -27,12 +57,12 @@ global g_ComboActive  := false ; 目前是否正處於「CP 鍵按著沒放開�
 }
 
 ~*LWin Up:: {
-	global g_LWinIsDown
+	Global g_LWinIsDown
 	g_LWinIsDown := false
 }
 
 ~*RWin:: {
-	global g_WinDownTime, g_RWinIsDown, g_LWinIsDown
+	Global g_WinDownTime, g_RWinIsDown, g_LWinIsDown
 	if !g_RWinIsDown && !g_LWinIsDown {
 		g_RWinIsDown  := true
 		g_WinDownTime := A_TickCount
@@ -40,12 +70,12 @@ global g_ComboActive  := false ; 目前是否正處於「CP 鍵按著沒放開�
 }
 
 ~*RWin Up:: {
-	global g_RWinIsDown
+	Global g_RWinIsDown
 	g_RWinIsDown := false
 }
 
 $*#+F23:: {
-	global g_WinDownTime, g_ComboActive, g_RWinIsDown, BurstThreshold
+	Global g_WinDownTime, g_ComboActive, g_RWinIsDown, BurstThreshold
 
 	;; 忽略長按過程中系統自動重複送出的訊號
 	if g_ComboActive
@@ -63,6 +93,6 @@ $*#+F23:: {
 }
 
 $*#+F23 Up:: {
-	global g_ComboActive
+	Global g_ComboActive
 	g_ComboActive := false
 }
